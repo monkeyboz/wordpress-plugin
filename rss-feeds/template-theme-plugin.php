@@ -25,6 +25,7 @@
 			        'hierarchical' => false,
 			        'rewrite' => array("slug" => "feeds"),
 			        'query_var' => "feeds",
+			        'taxonomies' => array('category'),
         			"supports"	=>	array("title","editor","thumbnail","excerpt"),
         		);
         	register_post_type('feeds',$array);
@@ -73,7 +74,6 @@
         
         function feed_info($id){
             $feed = new WP_Query('post_type=feeds&ID='.$id);
-            print_r($feed);
             //include_once('ttp-import-admin.php'); 
         }
         add_shortcode('feed_info','feed_info');

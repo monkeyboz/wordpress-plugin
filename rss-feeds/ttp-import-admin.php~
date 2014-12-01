@@ -1,33 +1,49 @@
 <?php
-	extract($_POST);
-	update_option('rss_feeds', $feed_info);
-	
-	if($feed_name){
+	if(sizeof($_POST) > 0 && isset($_POST['feed_name'])){
+		extract($_POST);
+		
+		$p = explode('&',$feed_info);
+		$p = array_unique($p);
+		
+		$p = array_filter($p);
+		
+		$feed_info = implode('&',$p);
+		update_option('rss_feeds', $feed_info);
 		$feeds = get_option('rss_feeds');
 		
-		$content = file_get_contents($feed_url);
-		$xml = simplexml_load_string($content);
-		$xml = json_encode($xml);
-		$xml = json_decode($xml,true);
-		
-		foreach($xml['channel']['item'] as $a){
-			$post = array(
-					'post_title'=>$a['title'],
-					'post_content'=>$a['description'],
-					'post_author'=>1,
-					'post_status'=>'publish',
-					'post_type'=>'feeds'
-				);
-			$id = wp_insert_post($post);
-			wp_set_post_categories($id, array($feed_category));
+		if(strlen($feed_name) > 0){
+			$content = file_get_contents($feed_url);
+			$xml = simplexml_load_string($content);
+			$xml = json_encode($xml);
+			$xml = json_decode($xml,true);
+			
+			if(strlen($feed_category) < 1){
+				$feed_category = 'uncategorized';
+			}
+			
+			foreach($xml['channel']['item'] as $a){
+				$post = array(
+						'post_title'=>$a['title'],
+						'post_content'=>$a['description'],
+						'post_category'=>array($feed_category),
+						'post_author'=>1,
+						'post_status'=>'publish',
+						'post_type'=>'feeds'
+					);
+				$id = wp_insert_post($post);
+			}
+			
+			if(strlen($feeds) > 0){
+				update_option('rss_feeds',$feeds.'&'.$feed_name.'|'.$feed_url.'|'.$feed_category);
+			} else {
+				update_option('rss_feeds',$feed_name.'|'.$feed_url.'|'.$feed_category);
+			}
+			$feeds = get_option('rss_feeds');
+			$p = explode('&',$feeds);
+			$p = array_unique($p);
+			$p = array_filter($p);
+			$feeds = implode('&',$p);
 		}
-		
-		if($feeds){
-			update_option('rss_feeds',$feeds+'&'.$feed_name.'|'.$feed_url.'|'.$feed_category);
-		} else {
-			update_option('rss_feeds',$feed_name.'|'.$feed_url.'|'.$feed_category);
-		}
-		$feeds = get_option('rss_feeds');
 	} else {
 		$feeds = get_option('rss_feeds');
 	}
@@ -44,14 +60,14 @@
 		<div>
 			<div>Feed Category</div>
 			<div>
-				<input type="text" name="feed_category" value="<?php echo $feed_category; ?>"/>
+				<?php wp_dropdown_categories(array('hide_empty' => 0, 'name' => 'feed_category', 'hierarchical' => true)); ?>
 			</div>
 		</div>
 		<div>
 			<div>Feed URL</div>
 			<div>
 				<input type="text" name="feed_url" value="<?php echo $feed_url; ?>"/>
-			</div>
+			</di>
 		</div>
 		<div>
 			<div>Full-Content</div>
@@ -97,22 +113,23 @@
 			<div>Action</div>
 		</div>
 		<div class="layout">
-			<?php $c = explode('&', $feeds); foreach($c as $a=>$b){ 
+			<?php $c = explode('&', $feeds); if(strlen($c[0]) > 0){ foreach($c as $a=>$b){ 
 				$g = explode('|', $b);
 			?>
 			<div class="row" data-info="<?php echo $b; ?>">
 				<div><?php echo $g[0]; ?></div>
 				<div><?php echo $g[1]; ?></div>
-				<div><?php echo $g[2]; ?></div>
+				<div><?php echo get_cat_name($g[2]); ?></div>
 				<div><a href="">Remove</a></div>
 			</div>
-			<?php } ?>
+			<?php } } ?>
 		</div>
 	</form>
 </div>
 <script>
 	function removeElement(){
-		document.getElementsByTagName('input')[5].value = document.getElementsByTagName('input')[5].value.replace(this.parentNode.parentNode.getAttribute('data-info'),'');
+		document.getElementsByTagName('input')[4].value = document.getElementsByTagName('input')[4].value.replace(this.parentNode.parentNode.getAttribute('data-info'),'');
+		document.getElementsByTagName('input')[4].value = document.getElementsByTagName('input')[4].value.replace('&'+this.parentNode.parentNode.getAttribute('data-info'),'');
 		var a = this.parentNode.parentNode.getElementsByTagName('div');
 		for(var i = 0; i < a.length; ++i){
 			a[i].style.textDecoration = 'line-through';
