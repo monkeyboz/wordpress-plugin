@@ -10,7 +10,7 @@
     include_once('ttp-admin.php');
     if (!function_exists('ttp_admin_actions')) {
         function ttp_admin_actions() {
-			add_menu_page('RSS Feed Importer', 'RSS Feed Importers', 'administrator', __FILE__, 'ttp_admin',plugins_url('Local-Splash-Med-600x200.jpg', __FILE__));
+			add_menu_page('RSS Feed', 'RSS Feed', 'administrator', __FILE__, 'ttp_admin',plugins_url('Feed_25x25.png', __FILE__));
         }
         add_action('admin_menu', 'ttp_admin_actions');
         

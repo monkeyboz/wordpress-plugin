@@ -77,14 +77,18 @@
 			    }
 				$post = array(
 						'post_title'=>$a['title'],
-						'post_content'=>str_replace('"', "'", $a['description']),
+						'post_content'=>str_replace('"', "'", 'Content From: <a href="'.$a['link'].'">'.$xml['channel']['title'].'</a> '.$a['description']),
 						'post_category'=>array($feed_category),
 						'post_author'=>1,
 						'post_status'=>'publish',
 						'post_type'=>'feeds'
 					);
 				$id = wp_insert_post($post);
-				update_post_meta($id,'tw_rss_feed_options', $feed_name.'|'.$feed_url.'|'.$feed_category);
+				if(isset($full_content)){
+			    	update_post_meta($id,'tw_rss_feed_options', $feed_name.'|'.$feed_url.'|'.$feed_category);
+				} else {
+			    	update_post_meta($id,'tw_rss_feed_options', $feed_name.'|'.$feed_url.'|'.$feed_category.'|full-content|'.$feed_content);
+				}
 			}
 			
 			if(strlen($feeds) > 0){
@@ -115,9 +119,28 @@
 	#content-div{
 		display: none;
 	}
+	.donate{
+	    float: right;
+	    padding: 90px;
+	}
+	#rss-function{
+	    float: left;
+	    width: 65%;
+	    background: #fff;
+	    padding: 10px;
+	    border-radius: 10px;
+	}
 </style>
 <div>
 	<h1>RSS Feed Importer</h1>
+	<div class="donate">
+	    <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+            <input type="hidden" name="cmd" value="_s-xclick">
+            <input type="hidden" name="hosted_button_id" value="ESVXPD73ET662">
+            <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+            <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+        </form>
+	</div>
 	<form action="" method="POST" id="rss-function">
 		<div>
 			<div>Feed Name</div>
@@ -169,13 +192,28 @@
 		        padding: 10px;
 		        color: #545454;
 		        margin-top: 10px;
+		        box-shadow: 2px 2px 0px #545454;
+		    }
+		    input[name="get-content"]{
+		        background: #CF5300;
+		        color: #fff;
+		    }
+		    input{
+		        padding: 10px;
+		        font-size: 15px;
+		        border: none;
+		    }
+		    select{
+		        padding: 20px;
+		        font-size: 15px;
+		        border: none;
 		    }
 			.header{
 				clear: both;
 			}
 			.header > div{
 				float: left;
-				width: 200px;
+				width: 25%;
 			}
 			.layout{
 				clear: both;
@@ -185,7 +223,7 @@
 			}
 			.row > div{
 				float: left;
-				width: 200px;
+				width: 25%;
 			}
 			.header{
 			    background: #000;
@@ -217,7 +255,7 @@
 	</form>
 </div>
 <script>
-	var fullcontent = document.getElementsByTagName('input')[2];
+	var fullcontent = document.getElementById('rss-function').getElementsByTagName('input')[2];
 	document.getElementById('content-div').style.display = 'none';
 	fullcontent.onclick = function(){
 		if(document.getElementById('content-div').style.display == 'none'){
@@ -280,14 +318,14 @@
 			var lay = document.getElementById('tw-content-layout');
 			xml = StringToXML(xmlhttp.responseText);
 			lay.innerHTML = xml.getElementsByTagName('link')[2].innerHTML;
-			httpGet(xml.getElementsByTagName('link')[2].innerHTML,'finish');
+			httpGet(encodeURIComponent(xml.getElementsByTagName('link')[2].innerHTML),'finish');
 		} else {
 			var info = '';
 			var lay = document.getElementById('tw-content-layout');
 			lay.innerHTML = xmlhttp.responseText;
 			if(xmlhttp.responseText.search('Moved Permanently') != -1){
 				var resp = xmlhttp.responseText.match(/(http:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?)\"/);
-				httpGet(resp[0].replace('"',''),'finish');
+				httpGet(encodeURIComponent(resp[0].replace('"','')),'finish');
 			} else {
 				lay.onmouseover = function(e){ selectContent(e,this,'in'); }
 				lay.onmouseout = function(e){ selectContent(e,this,'out'); }
@@ -332,7 +370,7 @@
 	}
 	
 	function getLayout(url){
-		httpGet(url,'initial');
+		httpGet(encodeURIComponent(url),'initial');
 	}
 
 	var info = document.getElementById('rss-function').getElementsByClassName('row');

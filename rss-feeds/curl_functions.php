@@ -7,5 +7,5 @@
         return $response;
     }
     
-    echo curl_load($_GET['url']);
+    echo curl_load(urldecode($_GET['url']));
 ?>
